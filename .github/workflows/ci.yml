@@ -6,9 +6,16 @@ on:
   pull_request:
     branches: ["v1", "main"]
 
+# COST (2026-11-20, founder: Actions spend past $250): a newer push to the same PR cancels the superseded run, and the job has a
+# timeout. Pushes to a branch group by commit SHA and are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('{0}-{1}', github.event_name, github.sha) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       matrix:
         python-version: ["3.10", "3.12"]
